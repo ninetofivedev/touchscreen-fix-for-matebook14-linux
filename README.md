@@ -20,12 +20,12 @@ The MateBook 14 (2025) touchscreen is connected via an internal Goodix/FTSC1000 
 So we have to tell the kernel to wait a little before initializing the I²C touchscreen:
 
 Create a new script in your bin folder:
-```
+```bash
 sudo nano /usr/local/bin/ftsc1000-touch-init.sh
 ```
 
 Fill it with:
-```
+```bash
 #!/bin/bash
 sudo modprobe -r i2c_hid_acpi
 sleep 1
@@ -34,13 +34,13 @@ sleep 1
 ```
 
 Save it and make it executable with:
-```
+```bash
 sudo chmod +x /usr/local/bin/ftsc1000-touch-init.sh
 ```
 
 Now we want it to be executed on startup.
 Create a new systemd service in your systemd folder:
-```
+```bash
 sudo nano /etc/systemd/system/ftsc1000-touch.service
 ```
 
@@ -60,11 +60,11 @@ WantedBy=multi-user.target
 ```
 
 Activate it with following commands:
-```
+```bash
 sudo systemctl daemon-reload
 sudo systemctl enable ftsc1000-touch.service
 ```
 
 Restart Linux.
 
-Your Touchscreen should now work. 
+Your Touchscreen should work now. 
