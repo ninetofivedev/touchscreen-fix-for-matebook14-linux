@@ -1,4 +1,4 @@
-# Touchscreen Fix for Matebook14 2025 (FLMH-X) for LinuxMint
+# Touchscreen Fix for Matebook14 2025 (FLMH-X) running LinuxMint
 
 1. [Introduction](#intro)
 2. [Background](#background)
@@ -8,7 +8,7 @@
 ## Introduction
 
 These instructions are intended for anyone who wants to have a permanently functioning touchscreen under Linux Mint on a Huawei Matebook 14 from 2025.
-I have tested it on my own device and can verify that it works on devices with the model number FLMH-X.
+I have tested it on my own device and can verify that it works on devices with the specific model number FLMH-X.
 
 ## Background
 
