@@ -29,3 +29,13 @@ Replace it with:
 ```
 GRUB_CMDLINE_LINUX_DEFAULT="quiet splash i2c_hid.quirks=0x2808:0x5662:0x4 i2c_hid_acpi_force=1 hid_multitouch.ignore_special_drivers=1 i2c_hid.initial_delay=1000"
 ```
+
+Save the changes.
+Update your grub file with:
+```
+sudo update-grub
+```
+
+Restart Linux.
+
+Try using your touchscreen. Does it work? Yes? Great! But this is just a temporary fix. 
