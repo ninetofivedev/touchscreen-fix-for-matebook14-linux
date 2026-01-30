@@ -1,1 +1,1 @@
-# Huawei-MateBook-14-2025-Touchscreen-Fixes-for-Linux-Mint
+# Touchscreen Fix for Matebook14 2025 (FLMH-X) for LinuxMint
