@@ -27,10 +27,10 @@ sudo nano /usr/local/bin/ftsc1000-touch-init.sh
 Fill it with:
 ```bash
 #!/bin/bash
-sudo modprobe -r i2c_hid_acpi
-sleep 1
-sudo modprobe i2c_hid_acpi
-sleep 1
+modprobe -r i2c_hid_acpi
+sleep 2
+modprobe i2c_hid_acpi
+sleep 2
 ```
 
 Save it and make it executable with:
@@ -47,13 +47,14 @@ sudo nano /etc/systemd/system/ftsc1000-touch.service
 Fill it with:
 ```
 [Unit]
-Description=FTSC1000 Touchscreen Init
-After=multi-user.target
+Description=FTSC1000 Touchscreen Init Delay Fix
+After=systemd-modules-load.service
+After=local-fs.target
 
 [Service]
 Type=oneshot
 ExecStart=/usr/local/bin/ftsc1000-touch-init.sh
-RemainAfterExit=yes
+TimeoutStartSec=10
 
 [Install]
 WantedBy=multi-user.target
