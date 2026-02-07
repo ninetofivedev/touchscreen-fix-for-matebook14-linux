@@ -1,4 +1,4 @@
-# Touchscreen Fix for Matebook14 2025 (FLMH-X) running Linux
+# Touchscreen Fix for Huawei Matebook14 2025 (FLMH-X) running Linux
 
 1. [Introduction](#intro)
 2. [Background](#background)
