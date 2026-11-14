@@ -1,30 +1,117 @@
-# Touchscreen Fix for Huawei Matebook14 2025 (FLMH-X) running Linux
+# Touchscreen Fix for Huawei MateBook 14 (2025) on Linux
 
-1. [Introduction](#intro)
-2. [Background](#background)
-3. [Settings](#settings)
+A small workaround for intermittent touchscreen initialization on the **Huawei MateBook 14 (2025), model FLMH-X**, using the **FTSC1000** I²C-HID touchscreen controller.
 
+The fix reloads the `i2c_hid_acpi` kernel module after a short delay during boot. This repository includes an **interactive installer** so you do not need to create the script and systemd service manually after reinstalling Linux.
 
-<a name="intro"></a>
-## Introduction
+> **Compatibility:** Tested by the original author on the FLMH-X with CachyOS, Linux Mint, Manjaro and Zorin OS. Other hardware models, kernel versions and distributions are not guaranteed to work. A Linux system running **systemd** is required.
 
-These instructions are intended for anyone who wants to have a permanently functioning touchscreen under Linux on a Huawei Matebook 14 from 2025.
-I have tested it on my own device and can verify that it works with CachyOS, LinuxMint, Manjaro and ZorinOS on devices with the specific model number FLMH-X.
+## Quick start: automatic installation (recommended)
 
-## Background
+1. Clone or download this repository, then open a terminal in its directory:
 
-The MateBook 14 (2025) touchscreen is connected via an internal Goodix/FTSC1000 I²C-HID controller that depends heavily on firmware (ACPI) information provided by the manufacturer. On this model, that firmware is primarily tailored for Windows and does not supply Linux with ideal initialization data. As a result, the Linux i2c_hid driver attempts to communicate with the touchscreen too early during boot, when the controller is not yet fully ready to respond. This leads to failed feature-report requests and incomplete device setup. Additionally, the specific FTSC1000 controller variant used in this laptop lacks a fully optimized device-specific quirk in the mainline kernel, so Linux treats it like a generic touchscreen which causes the initialization sequence to fail and prevents touch input from working properly.
+   ```bash
+   git clone https://github.com/ninetofivedev/touchscreen-fix-for-matebook14-linux.git
+   cd touchscreen-fix-for-matebook14-linux
+   ```
 
-## Settings
+   If you downloaded the ZIP instead, extract it and open a terminal in the extracted folder.
 
-So we have to tell the kernel to wait a little before initializing the I²C touchscreen:
+2. Run the installer:
 
-Create a new script in your bin folder:
+   ```bash
+   sudo bash install-touchscreen-fix.sh
+   ```
+
+3. Select **`1`** to install the fix, then confirm with **`Y`** (or press Enter). The installer prints the progress and checks that the files and systemd service were created and enabled successfully.
+
+4. **Reboot** and test the touchscreen:
+
+   ```bash
+   sudo reboot
+   ```
+
+The installer **does not reload the driver immediately**. It enables the fix for the next boot.
+
+### Installer menu
+
+```text
+=============================================
+ FTSC1000 Touchscreen Fix – MateBook 14 2025
+=============================================
+
+1) Fix installieren / erneut installieren
+2) Fix vollständig deinstallieren
+3) Beenden
+
+Auswahl [1-3]:
+```
+
+The installer interface and its status messages are in German. Before installing or uninstalling, it asks for confirmation (`[Y/n]`). The default when pressing Enter is **Yes**; enter `n` to cancel.
+
+### Remove the fix
+
+Run the same installer again:
+
+```bash
+sudo bash install-touchscreen-fix.sh
+```
+
+Choose **`2`** and confirm. The installer disables `ftsc1000-touch.service`, deletes the two files it manages, and reloads systemd. It does not delete unrelated files.
+
+> **Existing manual installation:** If you already followed the original instructions and created the files manually, the installer will **not overwrite or remove them**. It only modifies files marked as managed by this installer. Remove or back up the manually created files first if you want to switch to the automatic method.
+
+## How it works
+
+The MateBook 14 (2025) touchscreen is connected through an internal I²C-HID controller. On some Linux boots, the controller may not be ready when the driver first initializes, leaving touchscreen input unavailable.
+
+The workaround uses a systemd oneshot service to reload the kernel module after the standard module-loading and local filesystem startup targets:
+
+```bash
+modprobe -r i2c_hid_acpi
+sleep 2
+modprobe i2c_hid_acpi
+sleep 2
+```
+
+These commands briefly remove and reload the **shared `i2c_hid_acpi` driver**, potentially affecting other I²C-HID input devices while the module is unloaded. They should only be used on suitable hardware.
+
+## Verify the installation
+
+Check whether the service is enabled for startup:
+
+```bash
+systemctl is-enabled ftsc1000-touch.service
+```
+
+Expected output after installation: `enabled`.
+
+After reboot, check the last boot's service log:
+
+```bash
+journalctl -b -u ftsc1000-touch.service --no-pager
+```
+
+You can also inspect the service:
+
+```bash
+systemctl status ftsc1000-touch.service
+```
+
+Because the unit uses `Type=oneshot` without `RemainAfterExit=yes`, **`inactive (dead)` can be normal after a successful run**. Look for a successful exit in the journal rather than relying on the active/inactive label alone.
+
+## Manual installation (alternative)
+
+If you prefer to install the workaround manually, follow these steps instead of using the installer.
+
+### 1. Create the initialization script
+
 ```bash
 sudo nano /usr/local/bin/ftsc1000-touch-init.sh
 ```
 
-Fill it with:
+Paste:
+
 ```bash
 #!/bin/bash
 modprobe -r i2c_hid_acpi
@@ -33,19 +120,21 @@ modprobe i2c_hid_acpi
 sleep 2
 ```
 
-Save it and make it executable with:
+Make it executable:
+
 ```bash
 sudo chmod +x /usr/local/bin/ftsc1000-touch-init.sh
 ```
 
-Now we want it to be executed on startup.
-Create a new systemd service in your systemd folder:
+### 2. Create the systemd service
+
 ```bash
 sudo nano /etc/systemd/system/ftsc1000-touch.service
 ```
 
-Fill it with:
-```
+Paste:
+
+```ini
 [Unit]
 Description=FTSC1000 Touchscreen Init Delay Fix
 After=systemd-modules-load.service
@@ -60,12 +149,36 @@ TimeoutStartSec=10
 WantedBy=multi-user.target
 ```
 
-Activate it with following commands:
+### 3. Enable the service
+
 ```bash
 sudo systemctl daemon-reload
 sudo systemctl enable ftsc1000-touch.service
+sudo reboot
 ```
 
-Restart Linux.
+### Manually undo the manual installation
 
-Your Touchscreen should work now. 
+Only do this if these are the files you created specifically for this workaround:
+
+```bash
+sudo systemctl disable ftsc1000-touch.service
+sudo rm /etc/systemd/system/ftsc1000-touch.service
+sudo rm /usr/local/bin/ftsc1000-touch-init.sh
+sudo systemctl daemon-reload
+```
+
+Reboot afterward if you want to test startup without the fix.
+
+## Requirements and notes
+
+- Linux with **systemd** running as the init system.
+- Root privileges (`sudo`) to install or remove system files.
+- The `modprobe` utility (usually provided by the `kmod` package).
+- The `i2c_hid_acpi` driver supported by your kernel. The installer warns if `modinfo` cannot find it; this warning is not a guarantee the hardware is supported or unsupported.
+- The automatic installer uses the paths `/usr/local/bin/ftsc1000-touch-init.sh` and `/etc/systemd/system/ftsc1000-touch.service`.
+- Review scripts before executing them with root privileges. A successful installation does not by itself prove that the touchscreen is working; always test it after reboot.
+
+## License
+
+See [LICENSE](LICENSE).
