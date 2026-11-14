@@ -4,7 +4,7 @@ A small workaround for intermittent touchscreen initialization on the **Huawei M
 
 The fix reloads the `i2c_hid_acpi` kernel module after a short delay during boot. This repository includes an **interactive installer** so you do not need to create the script and systemd service manually after reinstalling Linux.
 
-> **Compatibility:** Tested by the original author on the FLMH-X with CachyOS, Linux Mint, Manjaro and Zorin OS. Other hardware models, kernel versions and distributions are not guaranteed to work. A Linux system running **systemd** is required.
+> **Compatibility:** Tested with a Matebook14 (2025), model FLMH-X with CachyOS, Linux Mint, Manjaro and Zorin OS. Other hardware models, kernel versions and distributions are not guaranteed to work. A Linux system running **systemd** is required.
 
 ## Quick start: automatic installation (recommended)
 
@@ -40,14 +40,14 @@ The installer **does not reload the driver immediately**. It enables the fix for
  FTSC1000 Touchscreen Fix – MateBook 14 2025
 =============================================
 
-1) Fix installieren / erneut installieren
-2) Fix vollständig deinstallieren
-3) Beenden
+1) Install / reinstall touchscreen fix
+2) Uninstall touchscreen fix
+3) Exit
 
-Auswahl [1-3]:
+Select an option [1-3]:
 ```
 
-The installer interface and its status messages are in German. Before installing or uninstalling, it asks for confirmation (`[Y/n]`). The default when pressing Enter is **Yes**; enter `n` to cancel.
+The installer interface and its status messages are in English. Before installing or uninstalling, it asks for confirmation (`[Y/n]`). The default when pressing Enter is **Yes**; enter `n` to cancel.
 
 ### Remove the fix
 
@@ -57,9 +57,9 @@ Run the same installer again:
 sudo bash install-touchscreen-fix.sh
 ```
 
-Choose **`2`** and confirm. The installer disables `ftsc1000-touch.service`, deletes the two files it manages, and reloads systemd. It does not delete unrelated files.
+Choose **`2`** and confirm. The installer disables `ftsc1000-touch.service`, removes the two installer-managed files, and reloads systemd. It does not delete unrelated files. If no installer-managed files are found, it reports that there is nothing to remove.
 
-> **Existing manual installation:** If you already followed the original instructions and created the files manually, the installer will **not overwrite or remove them**. It only modifies files marked as managed by this installer. Remove or back up the manually created files first if you want to switch to the automatic method.
+> **Existing manual installation:** If you already followed the original instructions and created the files manually, the installer will **not overwrite or remove them**. It only modifies files marked as managed by this installer. Back up and remove the manually created files first if you want to switch to the automatic method. The installer also refuses to overwrite symbolic links at either target path.
 
 ## How it works
 
@@ -177,6 +177,7 @@ Reboot afterward if you want to test startup without the fix.
 - The `modprobe` utility (usually provided by the `kmod` package).
 - The `i2c_hid_acpi` driver supported by your kernel. The installer warns if `modinfo` cannot find it; this warning is not a guarantee the hardware is supported or unsupported.
 - The automatic installer uses the paths `/usr/local/bin/ftsc1000-touch-init.sh` and `/etc/systemd/system/ftsc1000-touch.service`.
+- The installer checks the module with `modinfo`, validates the generated Bash script and systemd unit, and verifies that the unit is enabled. It does not automatically test touchscreen input.
 - Review scripts before executing them with root privileges. A successful installation does not by itself prove that the touchscreen is working; always test it after reboot.
 
 ## License
